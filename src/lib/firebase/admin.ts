@@ -32,7 +32,9 @@ export function getAdminApp(): App | null {
           clientEmail,
           privateKey,
         }),
-        databaseURL: process.env.NEXT_PUBLIC_FIREBASE_DATABASE_URL,
+        databaseURL:
+          process.env.NEXT_PUBLIC_FIREBASE_DATABASE_URL ||
+          `https://${projectId}-default-rtdb.firebaseio.com`,
       });
     } else {
       adminApp = initializeApp({

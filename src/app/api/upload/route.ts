@@ -11,10 +11,10 @@ export async function POST(req: NextRequest) {
     }
 
     const formData = await req.formData();
-    const file = formData.get('image');
+    const file = formData.get('file') || formData.get('image');
 
     if (!file) {
-      return NextResponse.json({ error: 'No image provided.' }, { status: 400 });
+      return NextResponse.json({ error: 'No image file provided.' }, { status: 400 });
     }
 
     // Prepare formData for ImgBB
@@ -36,6 +36,7 @@ export async function POST(req: NextRequest) {
     }
 
     return NextResponse.json({
+      success: true,
       url: data.data.url,
       display_url: data.data.display_url,
       thumb: data.data.thumb?.url,
