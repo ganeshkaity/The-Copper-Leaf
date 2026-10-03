@@ -1,0 +1,12 @@
+{
+  "rules": {
+    "tableLocks": {
+      "$restaurantId": {
+        "$tableId": {
+          ".read": true,
+          ".write": "auth != null && (!data.exists() || data.child('expiresAt').val() < now || data.child('uid').val() === auth.uid)"
+        }
+      }
+    }
+  }
+}

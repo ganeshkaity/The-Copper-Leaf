@@ -1,0 +1,113 @@
+@import "tailwindcss";
+
+:root {
+  --background: #FAF6F0;
+  --foreground: #1C1917;
+  --card: #FFFFFF;
+  --card-foreground: #1C1917;
+  --popover: #FFFFFF;
+  --popover-foreground: #1C1917;
+  --primary: #C8622A;
+  --primary-hover: #B3531E;
+  --primary-foreground: #FFFFFF;
+  --primary-subtle: #FDF4ED;
+  --secondary: #F3ECE2;
+  --secondary-foreground: #292524;
+  --muted: #F5EFEB;
+  --muted-foreground: #78716C;
+  --accent: #FDF4ED;
+  --accent-foreground: #C8622A;
+  --destructive: #DC2626;
+  --destructive-foreground: #FFFFFF;
+  --success: #16A34A;
+  --success-foreground: #FFFFFF;
+  --warning: #EA580C;
+  --warning-foreground: #FFFFFF;
+  --border: #E8E0D5;
+  --input: #E8E0D5;
+  --ring: #C8622A;
+  --radius: 0.75rem;
+
+  /* Table status colors */
+  --status-available: #16A34A;
+  --status-reserved: #EA580C;
+  --status-occupied: #DC2626;
+  --status-placing-order: #2563EB;
+  --status-cleaning: #CA8A04;
+  --status-blocked: #6B7280;
+}
+
+.dark {
+  --background: #0F0F12;
+  --foreground: #F4F4F6;
+  --card: #18181D;
+  --card-foreground: #F4F4F6;
+  --popover: #18181D;
+  --popover-foreground: #F4F4F6;
+  --primary: #D36830;
+  --primary-hover: #E2773F;
+  --primary-foreground: #FFFFFF;
+  --primary-subtle: #2A1C14;
+  --secondary: #22222A;
+  --secondary-foreground: #F4F4F6;
+  --muted: #22222A;
+  --muted-foreground: #A1A1AA;
+  --accent: #2A1C14;
+  --accent-foreground: #E2773F;
+  --destructive: #EF4444;
+  --destructive-foreground: #FFFFFF;
+  --success: #22C55E;
+  --success-foreground: #FFFFFF;
+  --warning: #F97316;
+  --warning-foreground: #FFFFFF;
+  --border: #2A2A33;
+  --input: #2A2A33;
+  --ring: #D36830;
+}
+
+/* Force Light theme on customer routes regardless of OS preference */
+.customer-root {
+  background-color: #FAF6F0 !important;
+  color: #1C1917 !important;
+  color-scheme: light !important;
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-feature-settings: "rlig" 1, "calt" 1;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(120, 113, 108, 0.25);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(120, 113, 108, 0.45);
+}
+
+/* Number input spinner hide */
+input[type=number]::-webkit-inner-spin-button, 
+input[type=number]::-webkit-outer-spin-button { 
+  -webkit-appearance: none; 
+  margin: 0; 
+}
+
+/* Diagonal stripe pattern for table occupancy progress bars */
+.bg-striped-copper {
+  background-image: repeating-linear-gradient(
+    45deg,
+    #C8622A,
+    #C8622A 10px,
+    #E2773F 10px,
+    #E2773F 20px
+  );
+}

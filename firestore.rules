@@ -1,0 +1,230 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() && getUserData().role == 'ADMIN';
+    }
+
+    function isWaiter() {
+      return isAuthenticated() && getUserData().role == 'WAITER';
+    }
+
+    function isKitchen() {
+      return isAuthenticated() && getUserData().role == 'KITCHEN';
+    }
+
+    function isStaff() {
+      return isAdmin() || isWaiter() || isKitchen();
+    }
+
+    function isStaffForRestaurant(restId) {
+      return isAdmin() || (
+        (isWaiter() || isKitchen()) &&
+        restId in getUserData().assignedRestaurantIds
+      );
+    }
+
+    function isOwner(uid) {
+      return isAuthenticated() && request.auth.uid == uid;
+    }
+
+    // Users collection
+    match /users/{userId} {
+      allow read: if isAuthenticated() && (request.auth.uid == userId || isAdmin() || isWaiter());
+      // Customers can create their own profile initially with role 'CUSTOMER'
+      allow create: if isAuthenticated() && request.auth.uid == userId && (
+        request.resource.data.role == 'CUSTOMER' ||
+        // Allow first user bootstrap if needed or admin creation
+        isAdmin()
+      );
+      // Customer can only update safe fields, NOT role or assignedRestaurantIds or forceLogoutAt
+      allow update: if isAuthenticated() && (
+        isAdmin() ||
+        (request.auth.uid == userId &&
+         !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'assignedRestaurantIds', 'forceLogoutAt']))
+      );
+      allow delete: if isAdmin();
+    }
+
+    // Restaurants
+    match /restaurants/{restaurantId} {
+      allow read: if true; // Public discovery and active branch details
+      allow write: if isAdmin();
+    }
+
+    // Menu Categories
+    match /menuCategories/{catId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Menu Items
+    match /menuItems/{itemId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Tables
+    match /tables/{tableId} {
+      allow read: if true;
+      allow write: if isAdmin() || (isWaiter() && isStaffForRestaurant(resource.data.restaurantId));
+    }
+
+    // Table Reservations
+    match /tableReservations/{resId} {
+      allow read: if isAdmin() ||
+        (isAuthenticated() && (resource.data.customerUid == request.auth.uid || isStaffForRestaurant(resource.data.restaurantId)));
+      allow create: if isAuthenticated();
+      allow update: if isAdmin() || (isAuthenticated() && (
+        isStaffForRestaurant(resource.data.restaurantId) ||
+        resource.data.customerUid == request.auth.uid
+      ));
+      allow delete: if isAdmin();
+    }
+
+    // Dining Sessions
+    match /diningSessions/{sessionId} {
+      allow read: if isAdmin() || (isAuthenticated() && (
+        resource.data.customerUid == request.auth.uid ||
+        isStaffForRestaurant(resource.data.restaurantId)
+      ));
+      allow write: if isAdmin() || (isAuthenticated() && isStaffForRestaurant(request.resource.data.restaurantId));
+    }
+
+    // Orders
+    match /orders/{orderId} {
+      allow read: if isAdmin() || (isAuthenticated() && (
+        resource.data.customerUid == request.auth.uid ||
+        isStaffForRestaurant(resource.data.restaurantId)
+      ));
+      allow create: if isAuthenticated();
+      // Only staff/admin can update order status; customer cannot directly modify totals or status
+      allow update: if isAdmin() || (isAuthenticated() && (
+        isStaffForRestaurant(resource.data.restaurantId)
+      ));
+      allow delete: if isAdmin();
+    }
+
+    // Bills
+    match /bills/{billId} {
+      allow read: if isAdmin() || (isAuthenticated() && isStaffForRestaurant(resource.data.restaurantId));
+      allow write: if isAdmin() || (isAuthenticated() && isStaffForRestaurant(request.resource.data.restaurantId));
+    }
+
+    // Payments
+    match /payments/{paymentId} {
+      allow read: if isAdmin() || (isAuthenticated() && (
+        resource.data.customerUid == request.auth.uid ||
+        isStaffForRestaurant(resource.data.restaurantId)
+      ));
+      // Payments are created/verified primarily via server route handlers
+      allow write: if isAdmin() || (isAuthenticated() && isStaffForRestaurant(request.resource.data.restaurantId));
+    }
+
+    // Membership Plans
+    match /membershipPlans/{planId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Customer Memberships
+    match /customerMemberships/{membershipId} {
+      allow read: if isAuthenticated() && (resource.data.customerUid == request.auth.uid || isAdmin());
+      allow write: if isAdmin();
+    }
+
+    // Loyalty Accounts
+    match /loyaltyAccounts/{accountId} {
+      allow read: if isAuthenticated() && (resource.data.customerUid == request.auth.uid || isAdmin() || isWaiter());
+      allow write: if isAdmin();
+    }
+
+    // Loyalty Transactions
+    match /loyaltyTransactions/{txId} {
+      allow read: if isAuthenticated() && (resource.data.customerUid == request.auth.uid || isAdmin());
+      allow write: if isAdmin();
+    }
+
+    // Coupons
+    match /coupons/{couponId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Offers
+    match /offers/{offerId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Reviews
+    match /reviews/{reviewId} {
+      allow read: if resource.data.status == 'PUBLISHED' || isAdmin();
+      allow create: if isAuthenticated() && request.resource.data.customerUid == request.auth.uid;
+      allow update, delete: if isAdmin();
+    }
+
+    // Service Requests (Call Waiter)
+    match /serviceRequests/{requestId} {
+      allow read: if isAdmin() || (isAuthenticated() && isStaffForRestaurant(resource.data.restaurantId));
+      allow create: if true; // Any customer at table can request assistance
+      allow update: if isAdmin() || (isAuthenticated() && isStaffForRestaurant(resource.data.restaurantId));
+      allow delete: if isAdmin();
+    }
+
+    // Inventory, Recipes, Purchases, Stock Adjustments, Expenses, Attendance, Commissions
+    match /inventoryItems/{id} {
+      allow read, write: if isAdmin();
+    }
+    match /recipes/{id} {
+      allow read, write: if isAdmin();
+    }
+    match /inventoryPurchases/{id} {
+      allow read, write: if isAdmin();
+    }
+    match /stockAdjustments/{id} {
+      allow read, write: if isAdmin();
+    }
+    match /expenses/{id} {
+      allow read, write: if isAdmin();
+    }
+    match /staffAttendance/{id} {
+      allow read: if isAdmin() || (isAuthenticated() && resource.data.staffUid == request.auth.uid);
+      allow create: if isAuthenticated();
+      allow update, delete: if isAdmin();
+    }
+    match /staffCommissions/{id} {
+      allow read, write: if isAdmin();
+    }
+    match /loginActivity/{id} {
+      allow read: if isAdmin();
+      allow create: if isAuthenticated();
+    }
+    match /taxes/{id} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    match /charges/{id} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    match /siteSettings/{id} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    match /notifications/{id} {
+      allow read: if isAuthenticated() && (resource.data.recipientUid == request.auth.uid || isAdmin());
+      allow write: if isAdmin();
+    }
+  }
+}

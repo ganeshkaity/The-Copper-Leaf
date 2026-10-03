@@ -1,0 +1,47 @@
+{
+  "name": "The Copper Leaf - Restaurant Management & Dining",
+  "short_name": "Copper Leaf",
+  "description": "Multi-restaurant dining, reservation, POS, and kitchen management system",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#FAF6F0",
+  "theme_color": "#C8622A",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/brand/logo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/brand/logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Management",
+      "short_name": "Manage",
+      "description": "Waiter POS & Operations",
+      "url": "/management/manage",
+      "icons": [{ "src": "/brand/logo.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Kitchen Display",
+      "short_name": "Kitchen",
+      "description": "Real-time kitchen orders display",
+      "url": "/management/kitchen",
+      "icons": [{ "src": "/brand/logo.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Admin Dashboard",
+      "short_name": "Admin",
+      "description": "Full restaurant administration",
+      "url": "/n/admin/dashboard",
+      "icons": [{ "src": "/brand/logo.png", "sizes": "192x192" }]
+    }
+  ]
+}
