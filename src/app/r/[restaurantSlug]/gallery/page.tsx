@@ -107,6 +107,7 @@ export default function RestaurantGalleryPage() {
                   alt={`The Copper Leaf Gallery ${idx + 1}`}
                   fill
                   className="object-cover group-hover:scale-105 transition-transform duration-500"
+                  unoptimized
                 />
                 <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                   <span className="p-3 rounded-full bg-white/90 text-[#1C1917] shadow-lg">
@@ -125,7 +126,7 @@ export default function RestaurantGalleryPage() {
             className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4"
           >
             <div className="relative max-w-4xl max-h-[85vh] w-full h-full rounded-2xl overflow-hidden">
-              <Image src={activeImage} alt="Preview" fill className="object-contain" />
+              <Image src={activeImage} alt="Preview" fill className="object-contain" unoptimized />
             </div>
           </div>
         )}

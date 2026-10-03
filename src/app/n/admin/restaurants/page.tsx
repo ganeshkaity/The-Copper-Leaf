@@ -35,6 +35,8 @@ import {
   Upload,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { ImageUploadOrLink } from '@/components/ui/image-upload-or-link';
+import { AiGenerateButton } from '@/components/ui/ai-generate-button';
 
 export default function AdminRestaurantsPage() {
   const { refreshRestaurants } = useRestaurant();
@@ -462,36 +464,45 @@ export default function AdminRestaurantsPage() {
               </div>
             </div>
 
+            <div>
+              <div className="flex items-center justify-between mb-1">
+                <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300">
+                  Restaurant Story & Concept
+                </label>
+                <AiGenerateButton
+                  type="restaurant-about"
+                  itemName={name}
+                  currentText={description}
+                  onGenerated={(generated) => setDescription(generated)}
+                />
+              </div>
+              <textarea
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                rows={3}
+                placeholder="A prestigious fine-dining establishment blending authentic culinary crafts with luxury ambiance..."
+                className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 text-xs dark:bg-[#22222A] dark:text-white resize-none"
+              />
+            </div>
+
             {/* Images */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
               <div>
-                <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
-                  Logo Image
-                </label>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => handleImageUpload(e, 'logo')}
-                  className="text-xs"
+                <ImageUploadOrLink
+                  value={logoUrl}
+                  onChange={(url) => setLogoUrl(url)}
+                  label="Logo Image (Upload or Link)"
+                  placeholder="https://... logo URL"
                 />
-                {logoUrl && (
-                  <img src={logoUrl} alt="Logo Preview" className="h-10 mt-2 object-contain rounded" />
-                )}
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
-                  Hero Cover Image
-                </label>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => handleImageUpload(e, 'hero')}
-                  className="text-xs"
+                <ImageUploadOrLink
+                  value={heroImageUrl}
+                  onChange={(url) => setHeroImageUrl(url)}
+                  label="Hero Cover Image (Upload or Link)"
+                  placeholder="https://... cover URL"
                 />
-                {heroImageUrl && (
-                  <img src={heroImageUrl} alt="Hero Preview" className="h-10 mt-2 object-cover rounded" />
-                )}
               </div>
             </div>
 

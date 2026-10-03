@@ -332,7 +332,12 @@ export default function RestaurantBookingPage() {
 
                         <div className="mt-3 pt-2 border-t border-[#E8E0D5]/70 flex items-center justify-between text-[11px] text-[#78716C]">
                           <span>{table.floor || 'Dining Hall'}</span>
-                          <span>{table.landmark || `${table.size} Table`}</span>
+                          <span>
+                            {table.landmark ||
+                              (table.section
+                                ? `${table.section} • ${table.capacity} Seats`
+                                : `${table.capacity}-Seater Table`)}
+                          </span>
                         </div>
                       </div>
                     );

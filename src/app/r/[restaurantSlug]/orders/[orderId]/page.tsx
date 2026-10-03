@@ -326,6 +326,7 @@ export default function OrderTrackingPage() {
                     size="sm"
                     loading={callingWaiter}
                     onClick={() => handleCallWaiter('Request water')}
+                    className="bg-black text-white"
                   >
                     Request Water
                   </Button>
@@ -335,6 +336,7 @@ export default function OrderTrackingPage() {
                     size="sm"
                     loading={callingWaiter}
                     onClick={() => handleCallWaiter('Need assistance')}
+                    className="bg-black text-white"
                   >
                     Need Assistance
                   </Button>
@@ -344,6 +346,7 @@ export default function OrderTrackingPage() {
                     size="sm"
                     loading={callingWaiter}
                     onClick={() => handleCallWaiter('Request bill')}
+                    className="bg-black text-white"
                   >
                     Request Bill
                   </Button>
@@ -353,6 +356,7 @@ export default function OrderTrackingPage() {
                     size="sm"
                     loading={callingWaiter}
                     onClick={() => handleCallWaiter('Payment help')}
+                    className="bg-black text-white"
                   >
                     Payment Help
                   </Button>
@@ -361,7 +365,7 @@ export default function OrderTrackingPage() {
             )}
 
             <Link href={`/r/${restaurantSlug}/menu`} className="block">
-              <Button variant="outline" className="w-full">
+              <Button variant="outline" className="w-full bg-black text-white">
                 Order Additional Dishes
               </Button>
             </Link>

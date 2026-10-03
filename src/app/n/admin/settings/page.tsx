@@ -26,6 +26,8 @@ import {
   Upload,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { ImageUploadOrLink } from '@/components/ui/image-upload-or-link';
+import { AiGenerateButton } from '@/components/ui/ai-generate-button';
 
 export default function AdminSettingsPage() {
   const { currentRestaurant, restaurants, refreshRestaurants } = useRestaurant();
@@ -199,9 +201,17 @@ export default function AdminSettingsPage() {
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
-                Culinary Story (About Us)
-              </label>
+              <div className="flex items-center justify-between mb-1">
+                <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300">
+                  Culinary Story (About Us)
+                </label>
+                <AiGenerateButton
+                  type="restaurant-about"
+                  itemName={name}
+                  currentText={about}
+                  onGenerated={(generated) => setAbout(generated)}
+                />
+              </div>
               <textarea
                 value={about}
                 onChange={(e) => setAbout(e.target.value)}
@@ -212,9 +222,18 @@ export default function AdminSettingsPage() {
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
-                Why Choose Us Highlights
-              </label>
+              <div className="flex items-center justify-between mb-1">
+                <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300">
+                  Why Choose Us Highlights
+                </label>
+                <AiGenerateButton
+                  type="restaurant-about"
+                  itemName={name}
+                  promptHint="Highlight the unique value propositions, culinary heritage, ambiance, and impeccable service in 2-3 concise bullet points"
+                  currentText={whyChooseUs}
+                  onGenerated={(generated) => setWhyChooseUs(generated)}
+                />
+              </div>
               <textarea
                 value={whyChooseUs}
                 onChange={(e) => setWhyChooseUs(e.target.value)}
@@ -226,33 +245,21 @@ export default function AdminSettingsPage() {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
               <div>
-                <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
-                  Logo Image (ImgBB Storage)
-                </label>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => handleImageUpload(e, 'logo')}
-                  className="text-xs"
+                <ImageUploadOrLink
+                  value={logoUrl}
+                  onChange={(url) => setLogoUrl(url)}
+                  label="Restaurant Logo (File or Link)"
+                  placeholder="https://... logo image link"
                 />
-                {logoUrl && (
-                  <img src={logoUrl} alt="Logo" className="h-10 mt-2 object-contain rounded" />
-                )}
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
-                  Hero Cover Image (ImgBB Storage)
-                </label>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => handleImageUpload(e, 'hero')}
-                  className="text-xs"
+                <ImageUploadOrLink
+                  value={heroImageUrl}
+                  onChange={(url) => setHeroImageUrl(url)}
+                  label="Hero Cover Image (File or Link)"
+                  placeholder="https://... cover image link"
                 />
-                {heroImageUrl && (
-                  <img src={heroImageUrl} alt="Hero" className="h-16 mt-2 object-cover rounded" />
-                )}
               </div>
             </div>
           </Card>

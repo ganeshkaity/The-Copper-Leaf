@@ -647,7 +647,7 @@ export default function RestaurantCheckoutPage() {
                     placeholder="Enter code e.g. WELCOME10"
                     className="uppercase"
                   />
-                  <Button type="button" variant="outline" onClick={handleApplyCoupon}>
+                  <Button type="button" variant="outline" onClick={handleApplyCoupon} className="bg-black text-white"> 
                     Apply
                   </Button>
                 </div>

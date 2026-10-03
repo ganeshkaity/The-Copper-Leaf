@@ -8,17 +8,30 @@ import { MembershipPlan, CustomerMembership } from '@/types';
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { action, planId, customerUid, customerName, customerEmail, razorpayOrderId, razorpayPaymentId, razorpaySignature } = body;
+    const {
+      action = 'create-order',
+      planId,
+      customerUid,
+      customerName,
+      customerEmail,
+      razorpayOrderId,
+      razorpayPaymentId,
+      razorpaySignature,
+    } = body;
 
     const adminDb = getAdminDb();
     if (!adminDb) {
-      return NextResponse.json({ error: 'Database service unavailable' }, { status: 503 });
+      return NextResponse.json({ success: false, error: 'Database service unavailable' }, { status: 503 });
     }
 
-    if (action === 'create-order') {
+    if (action === 'create-order' || !action) {
+      if (!planId) {
+        return NextResponse.json({ success: false, error: 'Membership plan ID is required.' }, { status: 400 });
+      }
+
       const planDoc = await adminDb.collection('membershipPlans').doc(planId).get();
       if (!planDoc.exists || !planDoc.data()?.active) {
-        return NextResponse.json({ error: 'Membership plan is not available.' }, { status: 400 });
+        return NextResponse.json({ success: false, error: 'Membership plan is not available.' }, { status: 400 });
       }
 
       const plan = { ...planDoc.data(), id: planDoc.id } as MembershipPlan;
@@ -27,6 +40,7 @@ export async function POST(req: NextRequest) {
 
       if (!keyId || !keySecret) {
         return NextResponse.json({
+          success: true,
           razorpayOrderId: `mem_mock_${Date.now()}`,
           amount: Math.round(plan.price * 100),
           currency: 'INR',
@@ -42,11 +56,12 @@ export async function POST(req: NextRequest) {
         receipt: `mem_${Date.now()}`,
         notes: {
           planId: plan.id,
-          customerUid,
+          customerUid: customerUid || 'anonymous',
         },
       });
 
       return NextResponse.json({
+        success: true,
         razorpayOrderId: order.id,
         amount: order.amount,
         currency: order.currency,
@@ -57,19 +72,25 @@ export async function POST(req: NextRequest) {
 
     if (action === 'verify-payment') {
       const keySecret = process.env.RAZORPAY_KEY_SECRET;
-      if (keySecret && razorpayOrderId && razorpayPaymentId && razorpaySignature) {
+      if (
+        keySecret &&
+        razorpayOrderId &&
+        razorpayPaymentId &&
+        razorpaySignature &&
+        !razorpayOrderId.startsWith('mem_mock_')
+      ) {
         const generated = crypto
           .createHmac('sha256', keySecret)
           .update(`${razorpayOrderId}|${razorpayPaymentId}`)
           .digest('hex');
         if (generated !== razorpaySignature) {
-          return NextResponse.json({ error: 'Invalid payment signature' }, { status: 400 });
+          return NextResponse.json({ success: false, error: 'Invalid payment signature' }, { status: 400 });
         }
       }
 
       const planDoc = await adminDb.collection('membershipPlans').doc(planId).get();
       if (!planDoc.exists) {
-        return NextResponse.json({ error: 'Plan not found.' }, { status: 404 });
+        return NextResponse.json({ success: false, error: 'Plan not found.' }, { status: 404 });
       }
       const plan = { ...planDoc.data(), id: planDoc.id } as MembershipPlan;
 
@@ -79,16 +100,16 @@ export async function POST(req: NextRequest) {
 
       const newMembership: CustomerMembership = {
         id: memRef.id,
-        customerUid,
-        customerName,
-        customerEmail,
+        customerUid: customerUid || '',
+        customerName: customerName || 'Guest',
+        customerEmail: customerEmail || '',
         restaurantId: plan.restaurantId,
         planId: plan.id,
         planSnapshot: plan,
         startsAt: now,
         endsAt: now + durationMs,
         status: 'ACTIVE',
-        razorpayPaymentId,
+        razorpayPaymentId: razorpayPaymentId || `pay_mock_${Date.now()}`,
         createdAt: now,
       };
 
@@ -97,9 +118,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: true, membershipId: memRef.id });
     }
 
-    return NextResponse.json({ error: 'Invalid action.' }, { status: 400 });
+    return NextResponse.json({ success: false, error: 'Invalid action.' }, { status: 400 });
   } catch (error: any) {
     console.error('Membership payment error:', error);
-    return NextResponse.json({ error: error?.message || 'Membership operation failed.' }, { status: 500 });
+    return NextResponse.json(
+      { success: false, error: error?.message || 'Membership operation failed.' },
+      { status: 500 }
+    );
   }
 }

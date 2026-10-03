@@ -72,7 +72,7 @@ export default function RestaurantCartPage() {
                 >
                   <div className="relative w-20 h-20 rounded-2xl overflow-hidden bg-[#F3ECE2] shrink-0 border border-[#E8E0D5]">
                     {item.imageUrl ? (
-                      <Image src={item.imageUrl} alt={item.name} fill className="object-cover" />
+                      <Image src={item.imageUrl} alt={item.name} fill className="object-cover" unoptimized />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center">
                         <UtensilsCrossed className="w-6 h-6 text-[#C8622A] opacity-40" />

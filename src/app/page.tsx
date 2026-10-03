@@ -72,15 +72,6 @@ export default function RootHomePage() {
         </div>
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-[#E8E0D5] bg-white text-xs font-semibold text-[#C8622A] mb-6 shadow-sm"
-          >
-            <Sparkles className="w-3.5 h-3.5" />
-            <span>FINE DINING & ARTISANAL HOSPITALITY</span>
-          </motion.div>
 
           <motion.h1
             initial={{ opacity: 0, y: 25 }}
@@ -115,7 +106,7 @@ export default function RootHomePage() {
                   </Button>
                 </Link>
                 <Link href={`/r/${firstRestaurant.slug}/booking`}>
-                  <Button size="lg" variant="outline" className="w-full sm:w-auto px-8 py-3.5 text-base">
+                  <Button size="lg" variant="outline" className="w-full sm:w-auto px-8 py-3.5 text-base bg-black text-white hover:bg-white hover:text-black">
                     Reserve a Table
                   </Button>
                 </Link>
@@ -144,6 +135,7 @@ export default function RootHomePage() {
                   fill
                   className="object-cover"
                   priority
+                  unoptimized
                 />
               ) : (
                 <div className="flex flex-col items-center justify-center p-6 text-center">
@@ -263,7 +255,7 @@ export default function RootHomePage() {
                         <ArrowRight className="w-3.5 h-3.5" />
                       </Link>
                       <Link href={`/r/${rest.slug}/booking`}>
-                        <Button size="sm" variant="outline">
+                        <Button size="sm" variant="outline" className='bg-black text-white'>
                           Book Table
                         </Button>
                       </Link>

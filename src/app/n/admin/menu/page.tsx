@@ -36,8 +36,14 @@ import {
   Upload,
   CheckCircle2,
   Package,
+  FileSpreadsheet,
+  Globe,
+  Loader2,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { BatchMenuImportModal } from '@/components/menu/batch-menu-import-modal';
+import { ImageUploadOrLink } from '@/components/ui/image-upload-or-link';
+import { AiGenerateButton } from '@/components/ui/ai-generate-button';
 
 export default function AdminMenuPage() {
   const { currentRestaurant, restaurants } = useRestaurant();
@@ -76,6 +82,72 @@ export default function AdminMenuPage() {
   const [newCatName, setNewCatName] = useState('');
   const [newCatDesc, setNewCatDesc] = useState('');
   const [savingCat, setSavingCat] = useState(false);
+
+  // Batch Import Modal state
+  const [isBatchModalOpen, setIsBatchModalOpen] = useState(false);
+  const [lookingUpMeal, setLookingUpMeal] = useState(false);
+
+  const handleMealDbLookup = async () => {
+    if (!itemName.trim()) {
+      toast.error('Please enter a dish name first to search TheMealDB & USDA');
+      return;
+    }
+
+    setLookingUpMeal(true);
+    try {
+      const res = await fetch(`/api/external/meal-lookup?query=${encodeURIComponent(itemName.trim())}`);
+      const result = await res.json();
+
+      if (!res.ok || !result.success || !result.data) {
+        toast.info(result?.message || `No culinary match found for "${itemName}".`);
+        return;
+      }
+
+      const { data } = result;
+
+      // 1. Calories from USDA FoodData Central
+      if (data.estimatedCalories) {
+        setCalories(data.estimatedCalories.toString());
+      }
+
+      // 2. MealDB image if available and none selected
+      if (data.imageUrl && !imageUrl) {
+        setImageUrl(data.imageUrl);
+      }
+
+      // 3. Match category
+      if (data.category && categories.length > 0) {
+        const matchedCat = categories.find(
+          (c) =>
+            c.name.toLowerCase().includes(data.category.toLowerCase()) ||
+            data.category.toLowerCase().includes(c.name.toLowerCase())
+        );
+        if (matchedCat) {
+          setCategoryId(matchedCat.id);
+        }
+      }
+
+      // 4. Fill description / ingredients
+      if (data.ingredients && data.ingredients.length > 0) {
+        const ingText = `Ingredients: ${data.ingredients.join(', ')}`;
+        if (!description.trim()) {
+          setDescription(ingText);
+        } else if (!description.includes('Ingredients:')) {
+          setDescription(`${description.trim()}\n\n${ingText}`);
+        }
+      }
+
+      toast.success(
+        `Found "${data.name}"! Imported TheMealDB ingredients${
+          data.estimatedCalories ? ` & USDA calories (${data.estimatedCalories} kcal)` : ''
+        }`
+      );
+    } catch (err: any) {
+      toast.error('Failed to lookup culinary data: ' + err.message);
+    } finally {
+      setLookingUpMeal(false);
+    }
+  };
 
   const loadMenuData = async () => {
     if (!activeRestaurantId) {
@@ -192,7 +264,7 @@ export default function AdminMenuPage() {
     setSavingItem(true);
     try {
       const priceNum = parseFloat(basePrice);
-      const payload: Partial<MenuItem> = {
+      const payload: Record<string, any> = {
         restaurantId: activeRestaurantId,
         name: itemName.trim(),
         normalizedName: itemName.trim().toLowerCase(),
@@ -201,15 +273,22 @@ export default function AdminMenuPage() {
         description: description.trim(),
         imageUrl: imageUrl.trim(),
         prepTimeMinutes: parseInt(prepTimeMinutes) || 15,
-        calories: parseInt(calories) || undefined,
-        dietaryTags,
-        featured: isFeatured,
-        bestseller: isBestseller,
-        stockTracked,
-        stockQuantity: stockTracked ? parseInt(stockQuantity) || 0 : undefined,
-        lowStockThreshold: stockTracked ? parseInt(lowStockThreshold) || 10 : undefined,
-        updatedAt: serverTimestamp() as any,
+        calories: calories ? parseInt(calories) || null : null,
+        dietaryTags: dietaryTags || ['VEG'],
+        featured: Boolean(isFeatured),
+        bestseller: Boolean(isBestseller),
+        stockTracked: Boolean(stockTracked),
+        stockQuantity: stockTracked ? parseInt(stockQuantity) || 0 : null,
+        lowStockThreshold: stockTracked ? parseInt(lowStockThreshold) || 10 : null,
+        updatedAt: serverTimestamp(),
       };
+
+      // Strip any undefined values to adhere strictly to Firestore specifications
+      Object.keys(payload).forEach((key) => {
+        if (payload[key] === undefined) {
+          payload[key] = null;
+        }
+      });
 
       if (editingItem) {
         await updateDoc(doc(db, 'menuItems', editingItem.id), payload);
@@ -299,7 +378,11 @@ export default function AdminMenuPage() {
             </p>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <Button variant="outline" size="sm" onClick={() => setIsBatchModalOpen(true)}>
+              <FileSpreadsheet className="w-4 h-4 mr-1.5 text-emerald-600 dark:text-emerald-400" />
+              Batch Import (JSON / Excel)
+            </Button>
             <Button variant="outline" size="sm" onClick={() => setIsCatModalOpen(true)}>
               <FolderTree className="w-4 h-4 mr-1.5" />
               Add Category
@@ -473,9 +556,30 @@ export default function AdminMenuPage() {
           <form onSubmit={handleSaveItem} className="space-y-4 max-h-[75vh] overflow-y-auto pr-1">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
-                  Dish Name *
-                </label>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300">
+                    Dish Name *
+                  </label>
+                  <button
+                    type="button"
+                    onClick={handleMealDbLookup}
+                    disabled={lookingUpMeal || !itemName.trim()}
+                    className="inline-flex items-center gap-1 text-[11px] font-medium text-emerald-600 dark:text-emerald-400 hover:underline disabled:opacity-50 transition-opacity"
+                    title="Fetch culinary data & ingredients from TheMealDB and calories from USDA FoodData Central"
+                  >
+                    {lookingUpMeal ? (
+                      <>
+                        <Loader2 className="w-3 h-3 animate-spin" />
+                        Fetching...
+                      </>
+                    ) : (
+                      <>
+                        <Globe className="w-3 h-3" />
+                        TheMealDB & USDA Lookup
+                      </>
+                    )}
+                  </button>
+                </div>
                 <Input
                   value={itemName}
                   onChange={(e) => setItemName(e.target.value)}
@@ -542,37 +646,36 @@ export default function AdminMenuPage() {
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
-                Description / Ingredients
-              </label>
+              <div className="flex items-center justify-between mb-1">
+                <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300">
+                  Description / Ingredients
+                </label>
+                <AiGenerateButton
+                  type="menu-item"
+                  itemName={itemName}
+                  category={categories.find((c) => c.id === categoryId)?.name}
+                  currentText={description}
+                  onGenerated={(generated) => setDescription(generated)}
+                />
+              </div>
               <textarea
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                rows={2}
+                rows={3}
                 placeholder="Succulent slow-cooked poultry in rich heirloom tomato and white butter gravy..."
                 className="w-full px-3.5 py-2 rounded-xl border border-gray-200 dark:border-gray-700 text-xs dark:bg-[#22222A] dark:text-white resize-none"
               />
             </div>
 
-            {/* Food Image upload via ImgBB */}
+            {/* Food Image: ImgBB File Upload, Direct Link or Fetch Online */}
             <div>
-              <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
-                Dish Photography (ImgBB Storage)
-              </label>
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleImageUpload}
-                disabled={uploadingImage}
-                className="text-xs"
+              <ImageUploadOrLink
+                value={imageUrl}
+                onChange={(url) => setImageUrl(url)}
+                searchQuery={itemName}
+                label="Dish Photography (Upload, Link or Fetch Online)"
+                placeholder="https://images.unsplash.com/... or paste image URL"
               />
-              {imageUrl && (
-                <img
-                  src={imageUrl}
-                  alt="Preview"
-                  className="h-16 w-16 object-cover rounded-xl mt-2 border border-gray-200"
-                />
-              )}
             </div>
 
             {/* Flags */}
@@ -584,7 +687,7 @@ export default function AdminMenuPage() {
                   onChange={(e) => setIsBestseller(e.target.checked)}
                   className="rounded text-primary"
                 />
-                <span>Bestseller Dish</span>
+                <span className="text-red-500 dark:text-red-400">Bestseller Dish</span>
               </label>
 
               <label className="flex items-center gap-2 text-xs font-medium cursor-pointer">
@@ -594,7 +697,7 @@ export default function AdminMenuPage() {
                   onChange={(e) => setIsFeatured(e.target.checked)}
                   className="rounded text-primary"
                 />
-                <span>Featured on Home</span>
+                <span className="text-red-500 dark:text-red-400">Featured on Home</span>
               </label>
 
               <label className="flex items-center gap-2 text-xs font-medium cursor-pointer">
@@ -604,7 +707,7 @@ export default function AdminMenuPage() {
                   onChange={(e) => setStockTracked(e.target.checked)}
                   className="rounded text-primary"
                 />
-                <span>Track Stock Quantity</span>
+                <span className="text-red-500 dark:text-red-400">Track Stock Quantity</span>
               </label>
             </div>
 
@@ -694,6 +797,17 @@ export default function AdminMenuPage() {
             </div>
           </form>
         </Modal>
+
+        {/* Batch Menu Items Import Modal */}
+        {activeRestaurantId && (
+          <BatchMenuImportModal
+            isOpen={isBatchModalOpen}
+            onClose={() => setIsBatchModalOpen(false)}
+            restaurantId={activeRestaurantId}
+            categories={categories}
+            onSuccess={loadMenuData}
+          />
+        )}
       </div>
     </AdminShell>
   );

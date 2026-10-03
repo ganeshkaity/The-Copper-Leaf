@@ -97,6 +97,7 @@ export default function MembershipPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          action: 'create-order',
           planId: plan.id,
           restaurantId: activeRestaurantId,
           customerUid: user.uid,
@@ -106,12 +107,12 @@ export default function MembershipPage() {
       });
 
       const data = await res.json();
-      if (!res.ok || !data.success) {
-        throw new Error(data.message || 'Failed to initiate membership payment');
+      if (!res.ok || (!data.success && !data.razorpayOrderId)) {
+        throw new Error(data.error || data.message || 'Failed to initiate membership payment');
       }
 
       // Check if Razorpay is loaded
-      if (typeof window === 'undefined' || !window.Razorpay) {
+      if (typeof window === 'undefined' || !(window as any).Razorpay) {
         const script = document.createElement('script');
         script.src = 'https://checkout.razorpay.com/v1/checkout.js';
         script.async = true;
@@ -124,14 +125,47 @@ export default function MembershipPage() {
       const options = {
         key: data.keyId,
         amount: data.amount,
-        currency: 'INR',
+        currency: data.currency || 'INR',
         name: currentRestaurant?.name || 'The Copper Leaf',
         description: `${plan.name} Membership (${plan.durationDays} Days)`,
         order_id: data.razorpayOrderId,
         handler: async (response: any) => {
-          toast.success(`Welcome to ${plan.name} Club! Your membership is active.`);
-          // Reload page data
-          window.location.reload();
+          try {
+            toast.loading('Activating your membership...', { id: 'membership-activation' });
+            const verifyRes = await fetch('/api/payments/razorpay/membership', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                action: 'verify-payment',
+                planId: plan.id,
+                customerUid: user.uid,
+                customerName: profile?.displayName || user.displayName || 'Guest',
+                customerEmail: profile?.email || user.email || '',
+                razorpayOrderId: response.razorpay_order_id,
+                razorpayPaymentId: response.razorpay_payment_id,
+                razorpaySignature: response.razorpay_signature,
+              }),
+            });
+
+            const verifyData = await verifyRes.json();
+            if (verifyRes.ok && verifyData.success) {
+              toast.success(`Welcome to ${plan.name} Club! Your membership is active.`, {
+                id: 'membership-activation',
+              });
+              setTimeout(() => {
+                window.location.reload();
+              }, 1200);
+            } else {
+              toast.error(verifyData.error || 'Failed to finalize membership activation', {
+                id: 'membership-activation',
+              });
+            }
+          } catch (err: any) {
+            console.error('Membership activation error:', err);
+            toast.error('Payment succeeded but membership activation failed. Please contact restaurant support.', {
+              id: 'membership-activation',
+            });
+          }
         },
         prefill: {
           name: profile?.displayName || user.displayName || '',
@@ -143,7 +177,11 @@ export default function MembershipPage() {
         },
       };
 
-      const rzp = new window.Razorpay(options);
+      const rzp = new (window as any).Razorpay(options);
+      rzp.on('payment.failed', (failResp: any) => {
+        toast.error(failResp.error?.description || 'Payment was cancelled or failed.');
+        setPurchasingPlanId(null);
+      });
       rzp.open();
     } catch (err: any) {
       console.error('Membership purchase error:', err);
@@ -230,41 +268,41 @@ export default function MembershipPage() {
           />
         ) : (
           <div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 ">
               {plans.map((plan) => {
                 const isCurrentPlan = activeMembership?.planId === plan.id;
 
                 return (
                   <Card
                     key={plan.id}
-                    className={`relative p-8 flex flex-col justify-between rounded-2xl border transition-all duration-300 hover:shadow-xl ${
+                    className={`relative p-8 flex flex-col justify-between rounded-2xl border transition-all duration-300 hover:shadow-xl${
                       isCurrentPlan
                         ? 'border-primary ring-2 ring-primary/20 bg-primary/5'
-                        : 'border-gray-200 bg-white hover:border-gray-300'
+                        : 'border-gray-200  hover:border-gray-300 '
                     }`}
                   >
                     {isCurrentPlan && (
-                      <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-primary text-white text-xs font-semibold rounded-full shadow">
+                      <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 text-xs font-semibold rounded-full shadow">
                         Current Tier
                       </div>
                     )}
 
-                    <div>
+                    <div className="bg-black text-white py-5 px-5 bg-gradient-to-r from-black via-orange-950/80 to-black rounded">
                       <div className="flex items-center justify-between mb-4">
-                        <h3 className="font-serif text-2xl font-bold text-gray-900">{plan.name}</h3>
-                        <div className="p-2.5 rounded-xl bg-orange-50 text-primary">
+                        <h3 className="font-serif text-2xl font-bold text-white">{plan.name}</h3>
+                        <div className="p-2.5 rounded-xl bg-white text-black">
                           <Crown className="w-5 h-5" />
                         </div>
                       </div>
 
-                      <div className="flex items-baseline gap-1 mb-6">
-                        <span className="text-4xl font-extrabold text-gray-900">₹{plan.price}</span>
+                      <div className="flex items-baseline gap-1 mb-6 text-white">
+                        <span className="text-4xl font-extrabold text-white">₹{plan.price}</span>
                         <span className="text-sm font-medium text-gray-500">/ {plan.durationDays} days</span>
                       </div>
 
                       <div className="space-y-3.5 mb-8">
-                        <div className="flex items-center gap-3 text-sm text-gray-700">
-                          <div className="w-5 h-5 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+                        <div className="flex items-center gap-3 text-sm text-white">
+                          <div className="w-5 h-5 rounded-full text-white flex items-center justify-center shrink-0">
                             <Check className="w-3.5 h-3.5" />
                           </div>
                           <span>
@@ -272,7 +310,7 @@ export default function MembershipPage() {
                           </span>
                         </div>
 
-                        <div className="flex items-center gap-3 text-sm text-gray-700">
+                        <div className="flex items-center gap-3 text-sm text-white">
                           <div className="w-5 h-5 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
                             <Check className="w-3.5 h-3.5" />
                           </div>
@@ -282,8 +320,8 @@ export default function MembershipPage() {
                         </div>
 
                         {plan.freeDrinksEveryVisit && (
-                          <div className="flex items-center gap-3 text-sm text-gray-700">
-                            <div className="w-5 h-5 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+                          <div className="flex items-center gap-3 text-sm text-white">
+                            <div className="w-5 h-5 rounded-full text-white flex items-center justify-center shrink-0">
                               <Check className="w-3.5 h-3.5" />
                             </div>
                             <span>Complimentary welcome beverage on every table visit</span>
@@ -291,8 +329,8 @@ export default function MembershipPage() {
                         )}
 
                         {plan.customPerks && plan.customPerks.map((perk, i) => (
-                          <div key={i} className="flex items-center gap-3 text-sm text-gray-700">
-                            <div className="w-5 h-5 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+                          <div key={i} className="flex items-center gap-3 text-sm text-white">
+                            <div className="w-5 h-5 rounded-full text-white flex items-center justify-center shrink-0">
                               <Check className="w-3.5 h-3.5" />
                             </div>
                             <span>{perk}</span>

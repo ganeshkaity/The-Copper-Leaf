@@ -32,6 +32,8 @@ import {
   Calendar,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { ImageUploadOrLink } from '@/components/ui/image-upload-or-link';
+import { AiGenerateButton } from '@/components/ui/ai-generate-button';
 
 export default function AdminOffersPage() {
   const { currentRestaurant, restaurants } = useRestaurant();
@@ -302,9 +304,17 @@ export default function AdminOffersPage() {
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
-                Description / Highlights
-              </label>
+              <div className="flex items-center justify-between mb-1">
+                <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300">
+                  Description / Highlights
+                </label>
+                <AiGenerateButton
+                  type="offer"
+                  itemName={title}
+                  currentText={description}
+                  onGenerated={(generated) => setDescription(generated)}
+                />
+              </div>
               <textarea
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
@@ -315,23 +325,13 @@ export default function AdminOffersPage() {
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
-                Banner Image (ImgBB Storage)
-              </label>
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleImageUpload}
-                disabled={uploadingImage}
-                className="text-xs"
+              <ImageUploadOrLink
+                value={imageUrl}
+                onChange={(url) => setImageUrl(url)}
+                searchQuery={title}
+                label="Banner Image (Upload, Link or Fetch Online)"
+                placeholder="https://images.unsplash.com/... or paste image URL"
               />
-              {imageUrl && (
-                <img
-                  src={imageUrl}
-                  alt="Banner preview"
-                  className="h-20 object-cover rounded-xl mt-2 border border-gray-200"
-                />
-              )}
             </div>
 
             <label className="flex items-center gap-2 text-xs font-medium cursor-pointer pt-1">
@@ -341,7 +341,7 @@ export default function AdminOffersPage() {
                 onChange={(e) => setFeatured(e.target.checked)}
                 className="rounded text-primary"
               />
-              <span>Feature prominently on restaurant landing hero</span>
+              <span className="text-red-500 dark:text-red-400">Feature prominently on restaurant landing hero</span>
             </label>
 
             <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-100 dark:border-gray-800">

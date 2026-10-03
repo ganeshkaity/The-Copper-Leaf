@@ -172,7 +172,7 @@ export default function CustomerAccountOverviewPage() {
                 </div>
 
                 <Link href="/account/settings">
-                  <Button variant="outline" size="sm">
+                  <Button variant="outline" size="sm" className='bg-black text-white'>
                     Edit Profile
                   </Button>
                 </Link>

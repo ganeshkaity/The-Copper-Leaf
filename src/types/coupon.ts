@@ -8,9 +8,9 @@ export interface Coupon {
   discountType: DiscountType;
   discountValue: number;
   minimumOrderAmount: number;
-  minOrderAmount?: number; // alias
-  maximumDiscountAmount?: number;
-  maxDiscount?: number; // alias
+  minOrderAmount?: number | null; // alias
+  maximumDiscountAmount?: number | null;
+  maxDiscount?: number | null; // alias
   startDate: any;
   endDate: any;
   usageLimit?: number;

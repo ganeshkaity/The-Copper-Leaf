@@ -177,7 +177,7 @@ export default function CustomerOrdersHistoryPage() {
                           size="sm"
                           loading={reorderingId === ord.id}
                           onClick={() => handleReorder(ord)}
-                          className="gap-1.5"
+                          className="gap-1.5 bg-black text-white"
                         >
                           <RotateCcw className="w-3.5 h-3.5" />
                           <span>Reorder</span>

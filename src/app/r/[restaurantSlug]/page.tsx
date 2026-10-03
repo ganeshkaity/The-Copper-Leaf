@@ -157,7 +157,7 @@ export default function RestaurantLandingPage() {
               </Button>
             </Link>
             <Link href={`/r/${restaurant.slug}/booking`}>
-              <Button size="lg" variant="outline" className="w-full sm:w-auto px-8 py-3.5 text-base">
+              <Button size="lg" variant="outline" className="w-full sm:w-auto px-8 py-3.5 text-base bg-black text-white">
                 Reserve a Table
               </Button>
             </Link>
@@ -173,6 +173,7 @@ export default function RestaurantLandingPage() {
                   fill
                   className="object-cover"
                   priority
+                  unoptimized
                 />
               ) : (
                 <div className="w-full h-full flex flex-col items-center justify-center p-6 text-center">
@@ -229,6 +230,7 @@ export default function RestaurantLandingPage() {
                           alt={item.name}
                           fill
                           className="object-cover group-hover:scale-105 transition-transform duration-500"
+                          unoptimized
                         />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center text-xs text-[#78716C]">
@@ -280,7 +282,7 @@ export default function RestaurantLandingPage() {
 
           <div className="text-center mt-12">
             <Link href={`/r/${restaurant.slug}/menu`}>
-              <Button size="lg" variant="outline" className="px-8">
+              <Button size="lg" variant="outline" className="px-8 bg-black text-white">
                 Explore Full Menu &rarr;
               </Button>
             </Link>

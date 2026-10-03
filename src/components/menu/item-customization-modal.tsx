@@ -106,7 +106,7 @@ export function ItemCustomizationModal({
         {/* Item Image Header */}
         <div className="relative h-52 w-full bg-[#F3ECE2]">
           {item.imageUrl ? (
-            <Image src={item.imageUrl} alt={item.name} fill className="object-cover" />
+            <Image src={item.imageUrl} alt={item.name} fill className="object-cover" unoptimized />
           ) : (
             <div className="w-full h-full flex items-center justify-center">
               <UtensilsCrossed className="w-12 h-12 text-[#C8622A] opacity-40" />

@@ -6,7 +6,8 @@ import Image from 'next/image';
 import { useParams } from 'next/navigation';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase/client';
-import { Restaurant, Offer } from '@/types';
+import type { Restaurant } from '@/types/restaurant';
+import type { Offer } from '@/types/offer';
 import { CustomerShell } from '@/components/customer/customer-shell';
 import { Button } from '@/components/ui/button';
 import { Tag, Sparkles, Copy, Check } from 'lucide-react';
@@ -100,7 +101,7 @@ export default function RestaurantOffersPage() {
                 <div>
                   {offer.imageUrl && (
                     <div className="relative h-48 w-full bg-[#F3ECE2]">
-                      <Image src={offer.imageUrl} alt={offer.title} fill className="object-cover" />
+                      <Image src={offer.imageUrl} alt={offer.title} fill className="object-cover" unoptimized />
                     </div>
                   )}
                   <div className="p-6">
@@ -142,7 +143,7 @@ export default function RestaurantOffersPage() {
 
                   <div className="mt-4">
                     <Link href={`/r/${restaurantSlug}/menu`} className="block">
-                      <Button variant="outline" className="w-full">
+                      <Button variant="outline" className="w-full bg-black text-white ">
                         Use Offer & Order
                       </Button>
                     </Link>

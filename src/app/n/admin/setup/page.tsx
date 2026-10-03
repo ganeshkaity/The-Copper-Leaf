@@ -33,6 +33,7 @@ import {
   Upload,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { AiGenerateButton } from '@/components/ui/ai-generate-button';
 
 export default function AdminSetupWizard() {
   const router = useRouter();
@@ -384,9 +385,17 @@ export default function AdminSetupWizard() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
-                    About / Story
-                  </label>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300">
+                      About / Story
+                    </label>
+                    <AiGenerateButton
+                      type="restaurant-about"
+                      itemName={name}
+                      currentText={description}
+                      onGenerated={(generated) => setDescription(generated)}
+                    />
+                  </div>
                   <textarea
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}

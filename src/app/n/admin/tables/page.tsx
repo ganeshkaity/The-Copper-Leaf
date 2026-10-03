@@ -138,13 +138,17 @@ export default function AdminTablesPage() {
 
     setSaving(true);
     try {
+      const parsedCapacity = parseInt(capacity) || 4;
+      const computedSize: Table['size'] = parsedCapacity <= 2 ? 'Small' : parsedCapacity <= 5 ? 'Medium' : 'Large';
+
       const payload: Partial<Table> = {
         restaurantId: activeRestaurantId,
         tableNumber: tableNumber.trim().toUpperCase(),
         floor: floor.trim(),
         section: section.trim(),
         shape,
-        capacity: parseInt(capacity) || 4,
+        capacity: parsedCapacity,
+        size: computedSize,
         landmark: landmark.trim(),
         updatedAt: serverTimestamp() as any,
       };

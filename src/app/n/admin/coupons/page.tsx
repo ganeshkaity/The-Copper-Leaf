@@ -116,7 +116,7 @@ export default function AdminCouponsPage() {
         discountType,
         discountValue: parseFloat(discountValue) || 0,
         minOrderAmount: parseFloat(minOrderAmount) || 0,
-        maxDiscount: maxDiscount ? parseFloat(maxDiscount) : undefined,
+        maxDiscount: maxDiscount ? parseFloat(maxDiscount) : null,
         description: description.trim(),
         updatedAt: serverTimestamp() as any,
       };

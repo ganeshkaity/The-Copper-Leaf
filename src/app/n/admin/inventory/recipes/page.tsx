@@ -33,6 +33,7 @@ import {
   Layers,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { ImageUploadOrLink } from '@/components/ui/image-upload-or-link';
 
 export default function AdminRecipesPage() {
   const { currentRestaurant, restaurants } = useRestaurant();
@@ -371,25 +372,15 @@ export default function AdminRecipesPage() {
               </div>
             </div>
 
-            {/* Image upload */}
+            {/* Recipe Image */}
             <div>
-              <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
-                Recipe Image (ImgBB Storage)
-              </label>
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleImageUpload}
-                disabled={uploadingImage}
-                className="text-xs"
+              <ImageUploadOrLink
+                value={imageUrl}
+                onChange={(url) => setImageUrl(url)}
+                searchQuery={recipeName || code}
+                label="Recipe Image (Upload, Link or Fetch Online)"
+                placeholder="https://... recipe image link"
               />
-              {imageUrl && (
-                <img
-                  src={imageUrl}
-                  alt="Preview"
-                  className="h-16 w-16 object-cover rounded-xl mt-2 border"
-                />
-              )}
             </div>
 
             {/* Ingredients table */}
